@@ -1,0 +1,6 @@
+{
+  "name": "healthcare.com",
+  "description": "A precision healthcare ecosystem featuring neural clinical assistance, secure pharmacopeia, practitioner directory, and collaborative patient-doctor scheduling.",
+  "requestFramePermissions": ["geolocation", "camera"],
+  "majorCapabilities": []
+}

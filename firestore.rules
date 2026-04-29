@@ -1,0 +1,101 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() { return request.auth != null; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    // --- Profile Validation ---
+    function isValidProfile(data) {
+      return data.keys().hasAll(['id', 'email', 'role']) &&
+             data.id is string && data.id == request.auth.uid &&
+             data.email is string && data.email.size() <= 256 &&
+             data.role in ['patient', 'doctor', 'med_store', 'lab'];
+    }
+
+    // --- Request Validation (Appointments, Orders, LabBookings) ---
+    function isValidRequest(data) {
+      return data.keys().hasAll(['patientId', 'status', 'createdAt']) &&
+             data.patientId is string && data.patientId == request.auth.uid &&
+             data.status in ['pending', 'confirmed', 'cancelled', 'accepted', 'processing', 'ready', 'delivered', 'completed'];
+    }
+
+    // --- Report Validation ---
+    function isValidReport(data) {
+      return data.keys().hasAll(['userId', 'title', 'summary']) &&
+             data.userId is string && data.userId == request.auth.uid &&
+             data.title is string && data.title.size() <= 200 &&
+             data.summary is string && data.summary.size() <= 5000;
+    }
+
+    // --- Rules ---
+
+    match /profiles/{userId} {
+      allow get: if true;
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == userId && isValidProfile(incoming());
+      allow update: if isSignedIn() && request.auth.uid == userId && isValidProfile(incoming());
+    }
+
+    match /blogs/{blogId} {
+      allow read: if true;
+      allow write: if isSignedIn(); 
+    }
+
+    match /reminders/{reminderId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid && incoming().userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    match /appointments/{id} {
+      allow read: if isSignedIn() && (resource.data.patientId == request.auth.uid || resource.data.doctorId == request.auth.uid);
+      allow create: if isSignedIn() && isValidRequest(incoming());
+      allow update: if isSignedIn() && (resource.data.patientId == request.auth.uid || resource.data.doctorId == request.auth.uid);
+    }
+
+    match /orders/{id} {
+      allow read: if isSignedIn() && (resource.data.patientId == request.auth.uid || resource.data.storeId == request.auth.uid);
+      allow create: if isSignedIn() && isValidRequest(incoming());
+      allow update: if isSignedIn() && (resource.data.patientId == request.auth.uid || resource.data.storeId == request.auth.uid);
+    }
+
+    match /labBookings/{id} {
+      allow read: if isSignedIn() && (resource.data.patientId == request.auth.uid || resource.data.labId == request.auth.uid);
+      allow create: if isSignedIn() && isValidRequest(incoming());
+      allow update: if isSignedIn() && (resource.data.patientId == request.auth.uid || resource.data.labId == request.auth.uid);
+    }
+
+    match /reports/{id} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidReport(incoming());
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    match /chats/{chatId} {
+      allow read: if isSignedIn() && (resource.data.patientId == request.auth.uid || resource.data.doctorId == request.auth.uid);
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (resource.data.patientId == request.auth.uid || resource.data.doctorId == request.auth.uid);
+
+      match /messages/{messageId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn() && incoming().senderId == request.auth.uid;
+      }
+    }
+
+    match /payments/{paymentId} {
+      allow read: if isSignedIn() && (resource.data.patientId == request.auth.uid || resource.data.doctorId == request.auth.uid);
+      allow create: if isSignedIn();
+    }
+  }
+}

@@ -1,0 +1,162 @@
+{
+  "entities": {
+    "Profile": {
+      "title": "User Profile",
+      "description": "User profile and health credentials",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "email": { "type": "string" },
+        "name": { "type": "string" },
+        "role": { "type": "string", "enum": ["patient", "doctor", "med_store", "lab"] },
+        "onboarded": { "type": "boolean" },
+        "dob": { "type": "string", "format": "date" },
+        "dor": { "type": "string", "format": "date" },
+        "age": { "type": "number" },
+        "experienceYears": { "type": "number" },
+        "fee": { "type": "number" },
+        "qrCode": { "type": "string" },
+        "lat": { "type": "number" },
+        "lng": { "type": "number" }
+      },
+      "required": ["id", "email", "role"]
+    },
+    "Blog": {
+      "title": "Health Publication",
+      "description": "Clinical insights and health articles",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "author": { "type": "string" },
+        "content": { "type": "string" },
+        "category": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "author", "content"]
+    },
+    "Reminder": {
+      "title": "Medicine Reminder",
+      "description": "Reminder for patient medication schedule",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "medicineName": { "type": "string" },
+        "dosage": { "type": "string" },
+        "time": { "type": "string" },
+        "frequency": { "type": "string" },
+        "active": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "medicineName", "time"]
+    },
+    "Appointment": {
+      "title": "Clinical Appointment",
+      "description": "Scheduled visit between patient and provider",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "patientId": { "type": "string" },
+        "doctorId": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "cancelled"] },
+        "purpose": { "type": "string" }
+      },
+      "required": ["patientId", "date"]
+    },
+    "Order": {
+      "title": "Pharmacy Order",
+      "description": "Medicine request from a patient to a store",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "patientId": { "type": "string" },
+        "storeId": { "type": "string" },
+        "storeName": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "accepted", "processing", "ready", "delivered", "cancelled"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["patientId", "storeId"]
+    },
+    "LabBooking": {
+      "title": "Diagnostic Booking",
+      "description": "Lab test booking from a patient to a lab",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "patientId": { "type": "string" },
+        "labId": { "type": "string" },
+        "labName": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "completed", "cancelled"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["patientId", "labId"]
+    },
+    "Report": {
+      "title": "Medical Report",
+      "description": "Patient clinical report or historical record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "summary": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "title"]
+    },
+    "Chat": {
+      "title": "Clinical Chat",
+      "description": "Secure communication channel",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "patientId": { "type": "string" },
+        "doctorId": { "type": "string" },
+        "doctorName": { "type": "string" },
+        "lastMessage": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "/profiles/{userId}": {
+      "schema": "Profile",
+      "description": "Individual user profiles"
+    },
+    "/blogs/{blogId}": {
+      "schema": "Blog",
+      "description": "Global health blog entries"
+    },
+    "/reminders/{reminderId}": {
+      "schema": "Reminder",
+      "description": "Patient medication reminders"
+    },
+    "/appointments/{appointmentId}": {
+      "schema": "Appointment",
+      "description": "Clinical appointment records"
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Pharmacy orders"
+    },
+    "/labBookings/{bookingId}": {
+      "schema": "LabBooking",
+      "description": "Diagnostic lab bookings"
+    },
+    "/reports/{reportId}": {
+      "schema": "Report",
+      "description": "Patient medical reports"
+    },
+    "/chats/{chatId}": {
+      "schema": "Chat",
+      "description": "Secure chats between users and providers"
+    },
+    "/chats/{chatId}/messages/{messageId}": {
+      "schema": { "type": "object", "properties": { "text": { "type": "string" }, "senderId": { "type": "string" }, "createdAt": { "type": "string", "format": "date-time" } } },
+      "description": "Chat messages"
+    }
+  }
+}
